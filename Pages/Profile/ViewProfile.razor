@@ -1,0 +1,77 @@
+﻿@page "/Profile/ViewProfile/{id:int}"
+@using PM_Blazor.Services.CacheServices
+@using PM_Blazor.Services.ServerServices
+@using PM_Blazor.Models
+@inject ServerProfileService _serverProfileService
+@inject CacheProfileService _cacheProfileService
+<PageTitle>Profile Details</PageTitle>
+
+<h3>Profile Details</h3>
+<br />
+<div class="row">
+    <div class="col-md-8">
+        <div class="row mb-3">
+            <div class="col-sm-3 fw-bold">
+                Profile Number
+            </div>
+            <div class="col-sm-6">
+               @getProfile.Id
+            </div>
+        </div>
+		<div class="row mb-3">
+			<div class="col-sm-3 fw-bold">
+				Name
+			</div>
+			<div class="col-sm-6">
+				@getProfile.Name
+			</div>
+		</div>
+		<div class="row mb-3">
+			<div class="col-sm-3 fw-bold">
+				Email
+			</div>
+			<div class="col-sm-6">
+				@getProfile.Email
+			</div>
+		</div>
+		<div class="row mb-3">
+			<div class="col-sm-3 fw-bold">
+				Contact
+			</div>
+			<div class="col-sm-6">
+				@getProfile.Contact
+			</div>
+		</div>
+        
+        
+    </div>
+</div>
+
+@code {
+
+    private GetProfileDto getProfile = new();
+
+	[Parameter]
+	public int id { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		var getProfileFromServer = await _serverProfileService.GetProfileByIdFromServerAsync(id);
+		if (getProfileFromServer != null)
+		{
+			getProfile = getProfileFromServer;
+		}
+		else
+		{
+			var profileFromCache = await _cacheProfileService.GetProfileAsync(id);
+			if(profileFromCache != null)
+			{
+				getProfile = profileFromCache;
+			}
+		}
+
+		
+	}
+
+
+}

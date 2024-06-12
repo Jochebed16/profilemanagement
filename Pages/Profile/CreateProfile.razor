@@ -1,0 +1,155 @@
+﻿@page "/Profile/CreateProfile"
+@using PM_Blazor.Models
+@inject HttpClient _client
+@inject NavigationManager navigationManager
+@using System.ComponentModel.DataAnnotations
+@using PM_Blazor.Services.ServerServices
+@inject ServerProfileService serverprofileservice
+@inject IJSRuntime js
+
+@*
+
+<PageTitle>Create profile</PageTitle>
+
+<div class="row pb-2">
+	<br />
+	<h2 class="text-primary">Create Profile</h2>
+	<hr />
+</div>
+<br />
+	<EditForm Model="addProfile" OnValidSubmit="onSubmithandler">
+		<DataAnnotationsValidator/>
+		<ValidationSummary />
+
+		<div class="col-md-6">
+			<label class="form-label">Name</label>
+			<InputText class="form-control" @bind-Value="addProfile.Name"/>
+		</div>
+		<br />
+		<div class="col-md-6">
+			<label class="form-label">Contact</label>
+		<InputText class="form-control" @bind-Value="addProfile.Contact" />
+		</div>
+		<br />
+		<div class ="col-md-6">
+			<label class="form-label">Email</label>
+		<InputText class="form-control" @bind-Value="addProfile.Email" />
+		</div>
+		<br />
+		<div class="col-12">
+        <button type="submit" class="btn btn-outline-success">Submit</button>
+		</div>
+		<br />
+	<a class="btn btn-outline-info" style="width:150px" href="/Profile">Back to List</a>
+	</EditForm>
+<MudAlert Severity="Severity.Success" Variant="Variant.Outlined">The reactor is running at optimum temperature</MudAlert>
+
+
+ @code {
+	private AddProfileDto addProfile = new();
+
+	private async Task onSubmithandler()
+	{
+		HttpResponseMessage response = await _client.PostAsJsonAsync<AddProfileDto>("api/Profile",addProfile);
+		if (response.IsSuccessStatusCode)
+		{
+			navigationManager.NavigateTo("/Profile");
+		}
+	}
+
+}  *@
+
+<PageTitle>Create profile</PageTitle>
+
+<div class="row pb-2">
+	<br />
+	<h2 class="text-primary">Create Profile</h2>
+	<hr />
+</div>
+<br />
+
+<EditForm Model="addProfile" OnValidSubmit="onSubmithandler">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Name"
+                                  @bind-Value="addProfile.Name" For="@(() => addProfile.Name)" />
+                    <MudTextField Label="Email" Class="mt-3"
+								  @bind-Value="addProfile.Email" For="@(() => addProfile.Email)" />
+                    <MudTextField Label="Contact"
+								  @bind-Value="addProfile.Contact" For="@(() =>addProfile.Contact)" />
+                </MudCardContent>
+                <MudCardActions>
+					<MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" >Create</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Secondary" Class="ml-auto" Href="/Profile">Back to List</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+
+@code {
+	private AddProfileDto addProfile = new();
+
+	private async Task onSubmithandler()
+	{
+		var response = await serverprofileservice.AddProfileToServerAsync(addProfile);
+
+        //server is online and successfully added new profile to server
+		if (response.IsServerOnline && response.Result)
+		{
+			await js.InvokeVoidAsync("alert", response.Message);
+			navigationManager.NavigateTo("/Profile");
+        }
+
+        //server is online but failed to add new profile to server
+        if (response.IsServerOnline && response.Result == false)
+        {
+			await js.InvokeVoidAsync("alert", response.Message);
+            navigationManager.NavigateTo("/Profile");
+        }
+
+
+
+        //server is offline and successfully added new profile to cache
+        if (response.IsServerOnline == false && response.Result)
+        {
+			await js.InvokeVoidAsync("alert", response.Message);
+            navigationManager.NavigateTo("/Profile");
+        }
+	}
+
+
+
+
+
+
+    //RegisterAccountForm model = new RegisterAccountForm();
+   // bool success;
+
+    // public class RegisterAccountForm
+    // {
+    //     [Required]
+    //     public string Username { get; set; }
+
+    //     [Required]
+    //     [EmailAddress]
+    //     public string Email { get; set; }
+
+    //     [Required]
+    //     [StringLength(13, ErrorMessage ="Contact is invalid.")]
+    //     public string Contact{ get; set; }
+
+
+    // }
+
+   // private void OnValidSubmit(EditContext context)
+   // {
+   //     success = true;
+   //     StateHasChanged();
+  //  }
+
+}

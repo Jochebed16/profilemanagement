@@ -1,0 +1,106 @@
+﻿@page "/Profile/EditProfile/{id:int}"
+@using PM_Blazor.Services.CacheServices
+@using PM_Blazor.Services.ServerServices
+@using PM_Blazor.Models
+@inject HttpClient _client
+@inject NavigationManager navigationManager
+@inject ServerProfileService _serverProfileService
+@inject CacheProfileService _cacheProfileService
+@inject IJSRuntime js
+
+
+<div class="col-6">
+	<h2 class="text-primary">Edit Profile</h2>
+</div>
+
+	<EditForm Model="addProfile" OnValidSubmit="onSubmithandler">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="col-md-6">
+			<label class="form-label">Name</label>
+			<InputText class="form-control" @bind-Value="addProfile.Name" />
+		</div>
+		<br />
+		<div class="col-md-6">
+			<label class="form-label">Contact</label>
+			<InputText class="form-control" @bind-Value="addProfile.Contact" />
+		</div>
+		<br />
+		<div class="col-md-6">
+			<label class="form-label">Email</label>
+			<InputText class="form-control" @bind-Value="addProfile.Email" />
+		</div>
+		<br />
+		<div class="col-12">
+			<button type="submit" class="btn btn-outline-success">Update</button>
+		</div>
+		<br />
+		<a class="btn btn-outline-info" style="width:150px" href="/Profile">Back to List</a>
+	</EditForm>
+
+@code {
+	private AddProfileDto addProfile = new();
+	private GetProfileDto getProfile = new();
+
+	[Parameter]
+	public int id { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		var getProfileFromServer = await _serverProfileService.GetProfileByIdFromServerAsync(id);
+		if (getProfileFromServer != null)
+		{
+			getProfile = getProfileFromServer;
+		}
+		else
+		{
+			var profileFromCache = await _cacheProfileService.GetProfileAsync(id);
+			if(profileFromCache != null)
+			{
+				getProfile = profileFromCache;
+			}
+		}
+
+		if(getProfile != null)
+		{
+			addProfile.Name = getProfile.Name;
+			addProfile.Contact = getProfile.Contact;
+			addProfile.Email = getProfile.Email;
+		}
+		else
+		{
+			await js.InvokeVoidAsync("alert", "Profile does not exist");
+			navigationManager.NavigateTo("/Profile");
+		}
+	}
+
+	private async Task onSubmithandler()
+	{
+		var response = await _serverProfileService.UpdateProfileInServer(id, addProfile);
+
+		//server is online and successfully added new profile to server
+		if (response.IsServerOnline && response.Result)
+		{
+			await js.InvokeVoidAsync("alert", response.Message);
+			navigationManager.NavigateTo("/Profile");
+		}
+
+		//server is online but failed to add new profile to server
+		if (response.IsServerOnline && response.Result == false)
+		{
+			await js.InvokeVoidAsync("alert", response.Message);
+			navigationManager.NavigateTo("/Profile");
+		}
+
+
+
+		//server is offline and successfully added new profile to cache
+		if (response.IsServerOnline == false && response.Result)
+		{
+			await js.InvokeVoidAsync("alert", response.Message);
+			navigationManager.NavigateTo("/Profile");
+		}
+	}
+
+}
